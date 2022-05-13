@@ -1,128 +1,60 @@
 import datetime as timer
-import math
 import json
 
-class PoolTimer:
-  def __init__ (self, start_time = None, end_time = None):
-    
-    self.start_time = {}
-    self.end_time = {}
-    self.time_played = 0
 
-  def change_times(self, start_time, end_time, operator):
-    if start_time["hour"]:
-      if operator == "add":
-        new_timeset = {"hour": start_time["hour"] + end_time["hour"],"minute": start_time["minute"] + end_time["minute"],"second": start_time["second"] + end_time["second"]}
-      
-        if new_timeset["second"] >= 60:
-          new_timeset["minute"] += (int(new_timeset["second"]/ 60))
-          new_timeset["second"] -= 60 * int(new_timeset["second"]/60)
-        if new_timeset["minute"] >= 60:
-          new_timeset["hour"] += int(new_timeset["minute"]/ 60)
-          new_timeset["minute"] -= 60 * (int(new_timeset["minute"]/ 60))
-      elif operator == "subtract":
-        new_timeset = {"hour": start_time["hour"] - end_time["hour"],"minute": start_time["minute"] - end_time["minute"],"second": start_time["second"] - end_time["second"]}
-        if new_timeset["minute"] < 0 and new_timeset["hour"] >= int(math.ceil(-(new_timeset["minute"])/60)):
-          new_timeset["hour"] -= int(math.ceil(-(new_timeset["minute"])/60))
-          new_timeset["minute"] += 60 * int(math.ceil(-(new_timeset["minute"])/60))
-        elif new_timeset["minute"] >= int(math.ceil(-(new_timeset["second"])/60)):
-          print("This is negative")
-            
-        if new_timeset["second"] < 0 and new_timeset["minute"] >= int(math.ceil(-(new_timeset["second"])/60)):
-          new_timeset["minute"] -= int(math.ceil(-(new_timeset["second"])/60))
-          new_timeset["second"] += 60 * int(math.ceil(-(new_timeset["second"])/60))
-        elif new_timeset["minute"] >= int(math.ceil(-(new_timeset["second"])/60)):
-          print("This is good")
-          
-      return new_timeset
-    
-
-  def new_time_set(self, time_set, set_type = "all"):
-    if set_type == "date":
-      time = time_set
-      month = time.month
-      day = time.day
-      year = time.year
-      
-      if day >= 30:
-        month += (int(day % 30))
-        day -= (30 * int(day % 30))
-      if month >= 12:
-        year += (int(month % 12))
-        print(int(month % 12))
-        month -= (12 * int(month % 12))
-      return {"month": month, "day": day, "year": year}
-    elif set_type == "time":
-      time = time_set
-      hour = time.hour
-      minute = time.minute
-      second = time.second
-      if second >= 60:
-        minute += (int(second % 60))
-        second -= (60 * int(second % 60))
-      if minute >= 60:
-        hour += (int(minute % 60))
-        minute -= (60 * int(minute % 60))
-      return {"hour": hour, "minute": minute, "second": second}
-    elif set_type == "all":
-      time = time_set
-      month = time.month
-      day = time.day
-      year = time.year
-      print(f"{month % 12}")
-
-      if day >= 30:
-        month += (int(day % 30))
-        day -= (30 * int(day % 30))
-      if month >= 12:
-        
-        year += (int(month % 12))
-        month -= (12 * int(month % 12))
-      
-      time = time_set
-      hour = time.hour
-      minute = time.minute
-      second = time.second
-      
-      if second >= 60:
-        minute += (int(second % 60))
-        second -= (60 * int(second % 60))
-      if minute >= 60:
-        hour += (int(minute % 60))
-        minute -= (60 * int(minute % 60))
-      return {"month": month, "day": day, "year": year, "hour": hour, "minute": minute, "second": second}
-    
-    
-
-  
 def file_manager(file_name, string_input = [], operation = "a"):
-  print(file_name.rsplit('.')[1])
   seperator_start = "********START OF FILE********"
   seperator_end = "*********END OF FILE*********"
-  temp_object = {"table": string_input}
+  temp_object = [string_input]
   if operation == "a":
+    try:
+      with open(file_name, "r") as print_file:
+        raw_data = json.load(print_file)
+        raw_data.append(string_input)
+        temp_object = raw_data
+    except:
+      with open(file_name, "w") as print_file:
+        json.dump(temp_object, print_file)
+    
     with open(file_name, "w") as print_file:
       json.dump(temp_object, print_file)
         
   elif operation == "r":
     print(seperator_start)
-        
-    with open(file_name, "r") as print_file:
-      raw_data = json.load(print_file)
-      table_contents = raw_data["table"]
-      print(f"File Name is {file_name}")
-      for content in table_contents:
-        print(f"{content}: {table_contents[content]}")
+    try:
+      
+      with open(file_name, "r") as print_file:
+        raw_data = json.load(print_file)
+        table_contents = raw_data
+        print(f"File Name is {file_name}")
+
+        table_seperator = "--------------------------"
+        for index in range(1, len(table_contents)):
+          for table in table_contents[index]:
+            
+            print(table_seperator)
+            temp_table = PoolTable(index)
+            temp_table.start_time = table_contents[index][table]["Start time"]
+            temp_table.end_time = table_contents[index][table]["End time"]
+            temp_table.time_played = table_contents[index][table]["Time played"]
+            temp_table.cost = table_contents[index][table]["Total cost of the table"]
+            print(f"Table number: {temp_table.table_number}")
+            print(f"Start time {temp_table.start_time}")
+            print(f"End time: {temp_table.end_time}")
+            print(f'Time played: {temp_table.time_played["hours"]}:{temp_table.time_played["minutes"]}:{temp_table.time_played["seconds"]}')
+          print(f"Cost of the table: {temp_table.cost}")
+    except FileNotFoundError:
+      print("File not found!")
     print(seperator_end)
 
 class PoolTable:
   def __init__ (self, table_number, start_time = None, end_time = None):
     self.table_number = table_number
     self.is_occupied = False
-    self.timer = PoolTimer;
     self.start_time = start_time
     self.end_time = end_time
-    self.time_played = 0
+    self.time_played = None
+    self.price_per_hour = 30
     self.cost = 0
 
   def start_timer(self, date):
@@ -139,42 +71,73 @@ class PoolTable:
       print("This table is currently occupied")
 
   def convert_time(self, time):
+    hours = 0
+    minutes = 0
+    seconds = time
+    total_time_in_seconds = time
     if time > 60:
-      hours = 0
-      minutes = 0
-      seconds = time
-      
       minutes = int(seconds/60)
       seconds -= 60 * int(seconds/60)
       if minutes >= 60:
         hours = int(minutes/60)
         minutes -= 60 * int(minutes/60)
-      return {"hours": hours, "minutes": minutes, "seconds": seconds}
+    return {"hours": hours, "minutes": minutes, "seconds": seconds, "total time": total_time_in_seconds}
       
   def table_finishes(self, time, file = None):
     if self.is_occupied == True:
       self.end_timer(time)
       self.is_occupied = False
-      self.time_played = self.calculate_time_played()
+      self.time_played = self.calculate_time(self.start_time, self.end_time)
+      self.cost = self.calculate_cost()
       if file != None:
         temp_date_time = f"{self.start_time}"
         temp_end_date_time = f"{self.end_time}"
-        file_manager(file, {"table number": self.table_number, "Start time": temp_date_time, "End time": temp_end_date_time, "Time played": self.time_played, "Total cost of the table": self.cost})
-          
+        file_manager(file, {f"Table {self.table_number}" : {"Start time": temp_date_time, "End time": temp_end_date_time, "Time played": self.time_played, "Total cost of the table": self.cost}})
+      print(f"Table {self.table_number} saved scuccessfully!")
     else:
       print("The table has no one at it")
+
+  def calculate_cost(self):
+    return (self.price_per_hour * self.time_played["hours"]) + ((self.price_per_hour/60) * self.time_played["minutes"])
+
+  def readable_datetime(self, date):
+    self.year = date.year
+    self.month = date.month
+
+    return {"year": self.year, "month": self.month}
   
-  def calculate_time_played(self):
-    holder = self.end_time - self.start_time
+  def calculate_time(self, start_time, end_time):
+    holder = end_time - start_time
     return self.convert_time(holder.seconds)
 
   def print_table_info(self):
+    print(f"Table number: {self.table_number}")
     if self.is_occupied:
       print("This table is occupied")
     else:
       print("This table is not occupied")
-    print(f"This table costs: ${self.cost}")
-    print(f"Table number: {self.table_number}")
-    print(f"Start time: {self.start_time}")
-    print(f"End time: {self.end_time}")
-    print(f"Total time played: {self.time_played['hours']}:{self.time_played['minutes']}:{self.time_played['seconds']}")
+    
+    
+    if self.start_time == None:
+      print(f"Start time: None")
+      print(f"This table costs: N/A")
+    else:
+      
+      print(f"Start time: {self.start_time.month}-{self.start_time.day}-{self.start_time.year} {self.start_time.hour}:{self.start_time.minute}:{self.start_time.second}")
+    if self.end_time == None:
+      print(f"End time: None")
+    else:
+      print(f"End time: {self.end_time.month}-{self.end_time.day}-{self.end_time.year} {self.end_time.hour}:{self.end_time.minute}:{self.end_time.second}")
+    if self.time_played == None and self.start_time == None:
+      pass
+    elif self.time_played == None:
+      self.time_played = self.calculate_time(self.start_time, timer.datetime.now())
+      print(f"Total time played: {self.time_played['hours']}:{self.time_played['minutes']}:{self.time_played['seconds']}")
+      self.cost = self.calculate_cost()
+      print(f"This table costs: ${self.cost}")
+    elif self.time_played != None and self.start_time != None:
+      self.cost = self.calculate_cost()
+      print(f"This table costs: ${self.cost}")
+      self.time_played = self.calculate_time(self.start_time, timer.datetime.now())
+      print(f"Total time played: {self.time_played['hours']}:{self.time_played['minutes']}:{self.time_played['seconds']}")
+    
